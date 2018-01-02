@@ -2,43 +2,51 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"github.com/gorilla/mux"
 	"time"
-	"database/sql"
+	//"database/sql"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/jmoiron/sqlx"
 )
+
+var database *sqlx.DB
 
 func main() {
 
-	database, _ := sql.Open("sqlite3", "./jodelgo.db")
+	database, _ = sqlx.Open("sqlite3", "./anonblog.db")
 	statement, _ := database.Prepare("CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY, postedat DATETIME DEFAULT CURRENT_TIMESTAMP, postbody TEXT)")
 	statement.Exec()
 	statement, _ = database.Prepare("INSERT INTO posts (postbody) values (?)")
 	statement.Exec("this is message 1")
 	statement.Exec("this is message 2")
 	statement.Exec("this is message 3")
-	
-	comments = append(comments, Comment{ID:"1", PostID:"1", CommentedAt:time.Now(), CommentBody:"cool commment"})
-	comments = append(comments, Comment{ID:"2", PostID:"3", CommentedAt:time.Now(), CommentBody:"upvoting"})
-	comments = append(comments, Comment{ID:"3", PostID:"3", CommentedAt:time.Now(), CommentBody:"spam commment"})
 
 	router := mux.NewRouter()
 	router.HandleFunc("/posts", GetPosts).Methods("GET")
-	//router.HandleFunc("/posts/{id}/comments", posts.showHandler).Methods("GET")
 	log.Fatal(http.ListenAndServe(":8000", router))
 }
 
 func GetPosts(w http.ResponseWriter, r *http.Request) {
-	json.NewEncoder(w).Encode(posts)
+	postCollection := []Post{}
+	retrievedPost := Post{}
+	rows, err := database.Queryx("SELECT * from posts")
+	if err != nil {
+		log.Fatalln(err)
+	}
+	for rows.Next() {
+		err := rows.StructScan(&retrievedPost)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		postCollection = append(postCollection, retrievedPost)
+		fmt.Printf("%#v\n", retrievedPost)
+	}
+
+	json.NewEncoder(w).Encode(postCollection)
 }
-
-//func (posts *Post) showHandler(w http.ResponseWriter, r *http.Request) {
-//	ideally this would retrieve items from a database
-
-
-//}
 
 type Post struct {
 	ID			string		`json:"id,omitempty"`
@@ -47,12 +55,3 @@ type Post struct {
 }
 
 var posts []Post
-
-type Comment struct {
-	ID			string		`json:"id,omitempty"`
-	PostID		string		`json:"postid,omitempty"`
-	CommentedAt	time.Time	`json:"timestamp,omitempty"`
-	CommentBody	string		`json:"body,omitempty"`
-}
-
-var comments []Comment
