@@ -52,7 +52,16 @@ func GetPostCollection(w http.ResponseWriter, r *http.Request) {
 
 func GetPost(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("Req: %s %s\n", r.Host, r.URL.Path)
-	fmt.Printf("%s", path.Base(r.URL.Path))
+
+	postid := path.Base(r.URL.Path)
+	fmt.Printf("%s\n", postid)
+
+	var p Post
+	err := database.Get(&p, "SELECT * from posts where ID=$1",postid)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	json.NewEncoder(w).Encode(p)
 }
 
 func CreatePost(w http.ResponseWriter, r *http.Request) {
