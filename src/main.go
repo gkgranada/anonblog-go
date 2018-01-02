@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"path"
 	"net/http"
 	"github.com/gorilla/mux"
 	"time"
@@ -21,12 +22,16 @@ func main() {
 	statement.Exec()
 
 	router := mux.NewRouter()
-	router.HandleFunc("/posts", GetPosts).Methods("GET")
+	// Get All Posts
+	router.HandleFunc("/posts", GetPostCollection).Methods("GET")
+	// Get Post By ID
+	router.HandleFunc("/posts/{postid}", GetPost).Methods("GET")
+	// Insert Post
 	router.HandleFunc("/posts", CreatePost).Methods("POST")
 	log.Fatal(http.ListenAndServe(":8000", router))
 }
 
-func GetPosts(w http.ResponseWriter, r *http.Request) {
+func GetPostCollection(w http.ResponseWriter, r *http.Request) {
 	postCollection := []Post{}
 	retrievedPost := Post{}
 	rows, err := database.Queryx("SELECT * from posts")
@@ -43,6 +48,11 @@ func GetPosts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(postCollection)
+}
+
+func GetPost(w http.ResponseWriter, r *http.Request) {
+	fmt.Printf("Req: %s %s\n", r.Host, r.URL.Path)
+	fmt.Printf("%s", path.Base(r.URL.Path))
 }
 
 func CreatePost(w http.ResponseWriter, r *http.Request) {
