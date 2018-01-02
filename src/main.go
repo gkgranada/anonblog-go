@@ -28,6 +28,9 @@ func main() {
 	router.HandleFunc("/posts/{postid}", GetPost).Methods("GET")
 	// Insert Post
 	router.HandleFunc("/posts", CreatePost).Methods("POST")
+
+	// Get All Comments under post
+	router.HandleFunc("/posts/{postid}/comments", GetCommentCollection).Methods("GET")
 	log.Fatal(http.ListenAndServe(":8000", router))
 }
 
@@ -77,6 +80,30 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("%#v\n", p)
 }
 
+func GetCommentCollection(w http.ResponseWriter, r *http.Request) {
+
+	fmt.Printf("Req comment: %s %s\n", r.Host, r.URL.Path)
+
+	postid := path.Base(r.URL.Path)
+	fmt.Printf("%s\n", postid)	
+	/*commentCollection := []Comment{}
+	retrievedComment := Comment{}
+	rows, err := database.Queryx("SELECT * from comments where POSTID=?$1",postid)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	for rows.Next() {
+		err := rows.StructScan(&retrievedComment)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		commentCollection = append(commentCollection, retrievedComment)
+	}
+
+	json.NewEncoder(w).Encode(commentCollection)
+	*/
+}
+
 type Post struct {
 	ID			string		`json:"id,omitempty"`
 	PostedAt	time.Time	`json:"timestamp,omitempty"`
@@ -84,3 +111,12 @@ type Post struct {
 }
 
 var posts []Post
+
+type Comment struct {
+	ID			string		`json:"id,omitempty"`
+	PostID		string		`json:"postid,omitempty"`
+	CommentedAt	time.Time	`json:"timestamp,omitempty"`
+	CommentBody	string		`json:"body,omitempty"`
+}
+
+var comments []Comment
