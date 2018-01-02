@@ -1,2 +1,3 @@
-# jodel-go
-Making a jodel-like microblogging service in Golang
+# anonblog-go
+Making an anonymous microblogging service in Golang
+inspired by Jodel
