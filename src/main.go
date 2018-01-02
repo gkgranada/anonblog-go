@@ -19,13 +19,10 @@ func main() {
 	database, _ = sqlx.Open("sqlite3", "./anonblog.db")
 	statement, _ := database.Prepare("CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY, postedat DATETIME DEFAULT CURRENT_TIMESTAMP, postbody TEXT)")
 	statement.Exec()
-	statement, _ = database.Prepare("INSERT INTO posts (postbody) values (?)")
-	statement.Exec("this is message 1")
-	statement.Exec("this is message 2")
-	statement.Exec("this is message 3")
 
 	router := mux.NewRouter()
 	router.HandleFunc("/posts", GetPosts).Methods("GET")
+	router.HandleFunc("/posts", CreatePost).Methods("POST")
 	log.Fatal(http.ListenAndServe(":8000", router))
 }
 
@@ -42,10 +39,23 @@ func GetPosts(w http.ResponseWriter, r *http.Request) {
 			log.Fatalln(err)
 		}
 		postCollection = append(postCollection, retrievedPost)
-		fmt.Printf("%#v\n", retrievedPost)
+		//fmt.Printf("%#v\n", retrievedPost)
 	}
 
 	json.NewEncoder(w).Encode(postCollection)
+}
+
+func CreatePost(w http.ResponseWriter, r *http.Request) {
+	decoder := json.NewDecoder(r.Body)
+	var p Post
+	err := decoder.Decode(&p)
+
+	if err != nil {
+		log.Fatalln(err)
+	}
+	statement, _ := database.Prepare("INSERT INTO posts (postbody) values(?)")
+	statement.Exec(p.PostBody)
+	fmt.Printf("%#v\n", p)
 }
 
 type Post struct {
